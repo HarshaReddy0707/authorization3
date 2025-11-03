@@ -1,27 +1,30 @@
 package authorization.authorization;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
-import java.util.Date; 
+
 
 @Service
-@RequiredArgsConstructor
 public class LoginAttemptService {
+    private  userauthrepo userRepository;
+public LoginAttemptService( userauthrepo userRepository) {
+    this.userRepository = userRepository;
+}
 
-    private final userauthrepo userRepository;
-    private static final int MAX_ATTEMPTS = 5; 
-    public static final long LOCK_TIME_DURATION_MINUTES = 30;
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long LOCK_TIME_DURATION = 15; // minutes
 
-    public void loginFailed(String username) {
+
+    public  void loginFailed(String username){
         authuser user = userRepository.findByUsername(username);
-        if (user != null && user.getAccountNonLocked()) {
+        if (user != null) {
             int attempts = user.getFailedAttempt();
             attempts++;
             user.setFailedAttempt(attempts);
-            
             if (attempts >= MAX_ATTEMPTS) {
                 user.setAccountNonLocked(false);
-                user.setLockTime(new Date());
+                user.setLockTime(LocalDateTime.now());
             }
             userRepository.save(user);
         }
@@ -37,18 +40,11 @@ public class LoginAttemptService {
         }
     }
 
-    
-    public boolean unlockWhenTimeExpired(authuser user) {
-        if (user.getLockTime() == null) {
-            return true; 
-        }
-        
-        long lockTimeInMillis = user.getLockTime().getTime();
-        long currentTimeInMillis = System.currentTimeMillis();
-        long lockDurationInMillis = LOCK_TIME_DURATION_MINUTES * 60 * 1000;
+public boolean isLocked(authuser user) {
+ if (user.getLockTime() == null) return false;
 
-        if (lockTimeInMillis + lockDurationInMillis < currentTimeInMillis) {
-            
+        LocalDateTime unlockTime = user.getLockTime().plusMinutes(LOCK_TIME_DURATION);
+        if (LocalDateTime.now().isAfter(unlockTime)) {
             user.setAccountNonLocked(true);
             user.setLockTime(null);
             user.setFailedAttempt(0);
@@ -56,5 +52,10 @@ public class LoginAttemptService {
             return true;
         }
         return false;
+    
+       
     }
+
+
+
 }

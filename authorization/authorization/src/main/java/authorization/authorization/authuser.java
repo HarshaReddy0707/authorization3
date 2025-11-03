@@ -1,47 +1,40 @@
 package authorization.authorization;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.Date; // Use java.util.Date for this field
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-// import jakarta.persistence.FetchType; // No longer needed
+import jakarta.persistence.FetchType; // <-- Import changed
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Column;
 import lombok.Data;
 
 @Entity
 @Data
 public class authuser {
-    @Id
+     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String username;
     private String email;
     private String password;
-
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean isAccountNonLocked=true;
+    @Column(nullable = false, columnDefinition = "int default 0")
+    private int failedAttempt;
     
-    @ManyToMany
+    private LocalDateTime lockTime;
+
+@ManyToMany(fetch = FetchType.EAGER) 
     @JoinTable(name = "user_roles_auth",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<authrole> roles = new HashSet<>();
-
-    @Column(name = "failed_attempt")
-    private int failedAttempt;
-
-   
-    @Column(name = "account_non_locked")
-    private Boolean accountNonLocked = true;
-
-    @Column(name = "lock_time")
-    private Date lockTime;
-
-    
+            private Set<authrole> role=new HashSet<>();
 }
