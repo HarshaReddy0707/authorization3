@@ -14,7 +14,7 @@ public class LoginAttemptService {
 
     public void loginFailed(String username) {
         authuser user = userRepository.findByUsername(username);
-        if (user != null && user.isAccountNonLocked()) {
+        if (user != null && user.getAccountNonLocked()) {
             int attempts = user.getFailedAttempt();
             attempts++;
             user.setFailedAttempt(attempts);
